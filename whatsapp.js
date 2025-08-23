@@ -24,6 +24,7 @@ async function sendMessageToPhone(number, message) {
     await client.sendMessage(chatId, message);
     console.log(`✅ Message sent to ${number}`);
   } catch (err) {
+    console.log(err)
     console.error(`❌ Failed to send to ${number}:`, err.message);
   }
 }
