@@ -1,45 +1,42 @@
-const GenericWatcher = require("../../DB");
+const { OptimizedWatcher } = require("../../DB");
 const { sendMessageToPhone } = require("../../whatsapp");
-
-const QUERY = `--sql 
-
-SELECT
-Appointment.DoctorID,
-Appointment.BranchID,
-Appointment.TheTime,
-Appointment.TheDate,
-Doctor.ArbName,
-Doctor.ClinicDepartmentID,
-sp.ArbName,
-sp.EngName,
-Patient.Number,
-Patient.Name
-  from Clinic_PatientsAppointments AS Appointment
-INNER JOIN dbo.Clinic_Doctors AS Doctor 
-ON Appointment.DoctorID = Doctor.DoctorID AND Appointment.BranchID = Doctor.BranchID
-INNER JOIN Clinic_DoctorSpecialty AS sp
- ON  Doctor.DoctorSpecialtyID = sp.ID  
- INNER JOIN Clinic_PatientsTelNumbers AS Patient 
- ON Patient.PatientID = Appointment.PatientID AND Patient.BranchID = Appointment.BranchID
-
-`
-
+const { QUERIES } = require("../../constants/Queries");
+const { getCompanyHeader } = require("../../services/companyService");
 
 // Table 1: Patients
-const patientWatcher = new GenericWatcher({
-  query: QUERY,
-  idField: "PatientID", // 🔑 Specify the ID field
+const patientWatcher = new OptimizedWatcher({
+  query: QUERIES.appointments,
+  idField: "AppointmentID",
   messageHandlers: {
     onNew: async (records) => {
+      const companyHeader = await getCompanyHeader();
+
       for (const patient of records) {
         const chatId = `966${patient.Number}`;
-        
-        const message = `مرحباً ${patient.Name}، تم إنشاء حسابك بنجاح! رقم ملفك: ${patient.PatientID}`;
+
+        const message = `
+مرحباً ${patient.Name}،
+${companyHeader?.CompanyArbName || "العيادة"}
+${companyHeader?.ArbAddress || ""}
+${companyHeader?.ArbTel ? `هاتف: ${companyHeader.ArbTel}` : ""}
+
+تم حجز موعدك بنجاح!
+التاريخ: ${patient.TheDate}
+الوقت: ${patient.TheTime}
+الدكتور: ${patient.ArbName}
+التخصص: ${patient.ArbName}
+
+نشكر لكم ثقتكم بنا`;
+
+        console.log("Sending message to:", chatId);
+        console.log("Message:", message);
+        // Uncomment to send actual message
         // await sendMessageToPhone(chatId, message);
       }
     },
   },
 });
+
 // Start the watcher
 console.log("🚀 Starting Patient Watcher...");
 patientWatcher.start(5000); // Check every 5 seconds
