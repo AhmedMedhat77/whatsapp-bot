@@ -68,3 +68,6 @@ Let me know if you'd like to make any adjustments to the README content!
 This is for educational purposes only. Do not use it for commercial purposes.
 You can use it on your own risk.   
 ##(This may block your WhatsApp account)
+
+
+## have to DOWNLOAD CHROME
